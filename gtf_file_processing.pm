@@ -12,6 +12,10 @@ use warnings;
 
 ### This subroutine will do the -g flag work, which is counting the number of genes in the gtf file. 
 sub get_result_g {
+	unless ( -f "$_[0]") {
+		print "File not exist:$!\n";
+		exit;
+	}
     open( IN, "<", "$_[0]" ) || die "cannot open the file: $!\n";
     my %hash1; # Key is the gene_id. 
 	my $g_cnt;
@@ -20,7 +24,7 @@ sub get_result_g {
 		# Use the regular expression to get the information in the input file 
 		# (which is about 30% faster than using the split).
 		# Using "$ time perl gtf_rd287.pl -e" in terminal.
-        if ( $_ =~/gene_id\s+\"(\S+)\"/gis ) {
+        if ( $_ =~/^\S+\s+\S+\sexon\s+\d+\s+\d+\s+\S\s+\S\s+\S\s+gene_id\s"(\S+)";\s+/ ) {
 			$hash1{$1}=1; # Use hash set to count the number of gene with different name.
 		}
 
@@ -32,6 +36,10 @@ sub get_result_g {
 
 ### This subroutine will do the -e flag work, which is counting the number of exons in the gtf file.
 sub get_result_e {
+	unless ( -f "$_[0]") {
+		print "File not exist:$!\n";
+		exit;
+	}
     open( IN, "<", "$_[0]" ) || die "cannot open the file: $!\n";
     my $e_cnt;
 
@@ -40,11 +48,8 @@ sub get_result_e {
 		# Use the regular expression to get the information in the input file 
 		# (which is about 30% faster than using the split).
 		# Using "$ time perl gtf_rd287.pl -e" in terminal.
-        if ( $_ =~/^\S+\s+\S+\s(\S+)\s+\d+\s+\d+\s+\S\s+\S\s+\S\s+gene_id\s"(\S+)";\s+/ ) {
-
-            if ( $1 eq "exon" ) {
-                $e_cnt++; # Count the number of all exons.
-            }
+        if ( $_ =~/^\S+\s+\S+\sexon\s+\d+\s+\d+\s+\S\s+\S\s+\S\s+gene_id\s"(\S+)";\s+/ ) {
+        	$e_cnt++; # Count the number of all exons.
         }
 
     }
@@ -55,6 +60,10 @@ sub get_result_e {
 
 ### This subroutine will do the -a flag work, which is calculating the average exon length.
 sub get_result_a {
+	unless ( -f "$_[0]") {
+		print "File not exist:$!\n";
+		exit;
+	}
     open( IN, "<", "$_[0]" ) || die "cannot open the file: $!\n";
     my $e_cnt=0;
     my $sum_e_l;
@@ -64,16 +73,12 @@ sub get_result_a {
 		# Use the regular expression to get the information in the input file 
 		# (which is about 30% faster than using the split).
 		# Using "$ time perl gtf_rd287.pl -a" in terminal.
-        if ( $_ =~/^\S+\s+\S+\s(\S+)\s+(\d+)\s+(\d+)\s+\S\s+\S\s+\S\s+gene_id\s"\S+";\s+/ ) {
-
-            if ( $1 eq "exon" ) {
-                $e_cnt++; # Count the number of the exons.
-
-                # Calculate the sum of the exon length.
-				# The length of each exon is calculate by the substruct of two coordinate.
-				# Use the abs() to ensure the sum length works.  
-				$sum_e_l += abs( $3 - $2 )+1; 
-            }
+        if ( $_ =~/^\S+\s+\S+\sexon\s+(\d+)\s+(\d+)\s+\S\s+\S\s+\S\s+gene_id\s"\S+";\s+/ ) {
+        	$e_cnt++; # Count the number of the exons.
+            # Calculate the sum of the exon length.
+			# The length of each exon is calculate by the substruct of two coordinate.
+			# Use the abs() to ensure the sum length works.  
+			$sum_e_l += abs( $2 - $1 )+1; 
         }
 
     }
@@ -85,12 +90,16 @@ sub get_result_a {
 	}
     
 	my $avg = $sum_e_l / $e_cnt; # Calculate the average exon length.
-    return "$avg"; # Return the average exon length.
+    return $avg; # Return the average exon length.
 }
 
 ### This subroutine will do the -n flag work, 
 # which is reporting the gene with the highest number of exons.
 sub get_result_n {
+	unless ( -f "$_[0]") {
+		print "File not exist:$!\n";
+		exit;
+	}
     open( IN, "<", "$_[0]" ) || die "cannot open the file: $!\n";
     my %hash1; # Key(name of gene), Value (the number of exons of that gene).
     my $highest_num_e      = 0;
@@ -103,15 +112,12 @@ sub get_result_n {
 		# Use the regular expression to get the information in the input file 
 		# (which is about 30% faster than using the split). 
 		# Using "$ time perl gtf_rd287.pl -n" in terminal.
-        if ( $_ =~/^\S+\s+\S+\s(\S+)\s+\d+\s+\d+\s+\S\s+\S\s+\S\s+gene_id\s"(\S+)";\s+/ ) {
-            
-			if ( $1 eq "exon" ) {
-                $hash1{$2}++; # The number of exons of that gene.
+        if ( $_ =~/^\S+\s+\S+\sexon\s+\d+\s+\d+\s+\S\s+\S\s+\S\s+gene_id\s"(\S+)";\s+/ ) { 
+			$hash1{$1}++; # The number of exons of that gene.
 				 			
-				# if you do not care whether there are several genes share 
-				# the same maximum number of exons: 
-				# if ($maxnumber < $hash1{$2}) {$maxnumber = $hash1{$2}; $maxname=$2;}
-            }
+			# if you do not care whether there are several genes share 
+			# the same maximum number of exons: 
+			# if ($maxnumber < $hash1{$2}) {$maxnumber = $hash1{$2}; $maxname=$2;
         }
 
     }
